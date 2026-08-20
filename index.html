@@ -1521,7 +1521,7 @@ async function saveItem(){
       kondisi:i.kondisi || ''
     };
 
-    const { error } = await supabaseClient
+    const { error } = await window.supabaseClient
       .from('inventaris')
       .update(supabaseData)
       .eq('kode_unit',supabaseData.kode_unit);
@@ -1606,11 +1606,10 @@ async function saveItem(){
     supabaseData
   );
 
-  const { data, error } = await supabaseClient
+  const { data, error } = await window.supabaseClient
     .from('inventaris')
     .insert([supabaseData])
     .select();
-
   if(error){
     console.error(
       '❌ Gagal menyimpan data ke Supabase:',
@@ -1914,11 +1913,10 @@ load(); refreshCounts(); renderDashboard();
 
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndjdWlrZmFoYWFnb21yem5pd2txIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcyMTkxNzEsImV4cCI6MjEwMjc5NTE3MX0.256Ptd1W1j9HtVCJMnNrvW1sbfAjaGJbEHdjap7upvQ';
 
-    const supabaseClient = createClient(
+    window.supabaseClient = createClient(
         SUPABASE_URL,
         SUPABASE_ANON_KEY
     );
-
     async function testSupabaseConnection() {
         const { data, error } = await supabaseClient
             .from('inventaris')
