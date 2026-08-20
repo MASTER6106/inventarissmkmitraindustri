@@ -1753,7 +1753,6 @@ function icon(n){
 /* ---------- init ---------- */
 load(); refreshCounts(); renderDashboard();
 </script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
     const SUPABASE_URL = 'https://wcuikfahaagomrzniwkq.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndjdWlrZmFoYWFnb21yem5pd2txIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcyMTkxNzEsImV4cCI6MjEwMjc5NTE3MX0.256Ptd1W1j9HtVCJMnNrvW1sbfAjaGJbEHdjap7upvQ';
@@ -1774,7 +1773,46 @@ load(); refreshCounts(); renderDashboard();
         console.log('✅ Supabase berhasil terhubung!');
         console.log('Data:', data);
     }
+    async function loadInventoryFromSupabase() {
+        try {
+            const { data, error } = await supabaseClient
+                .from('inventaris')
+                .select(`
+                    id,
+                    kode_unit,
+                    barcode,
+                    nama_merek,
+                    sumber_dana,
+                    masuk,
+                    jumlah,
+                    harga_satuan,
+                    total_nilai,
+                    "user",
+                    lokasi,
+                    kondisi
+                `)
+                .order('id', { ascending: true });
+            if (error) {
+                console.error(
+                    '❌ Gagal mengambil data inventaris:',
+                    error
+                );
+                return;
+            }
+            console.log(
+                '✅ Data inventaris dari Supabase:',
+                data
+            );
+            return data;
+        } catch (error) {
+            console.error(
+                '❌ Terjadi kesalahan:',
+                error
+            );
+        }
+    }
     testSupabaseConnection();
+    loadInventoryFromSupabase();
 </script>
 </body>
 </html>
