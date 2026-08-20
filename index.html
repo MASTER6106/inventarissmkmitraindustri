@@ -843,14 +843,171 @@ let items=[], log=[], view='dashboard';
 let editingId=null, outId=null, confirmFn=null;
 
 
-function load(){
-  try{ const s=localStorage.getItem(KEY); items = s? JSON.parse(s) : structuredClone(SEED); }
-  catch(e){ items = structuredClone(SEED); }
-  try{ log = JSON.parse(localStorage.getItem(LOGKEY)||'[]'); }catch(e){ log=[]; }
-  try{ fotos = JSON.parse(localStorage.getItem(FOTOKEY)||'{}'); }catch(e){ fotos={}; }
+async function load(){
+
+  /*
+   * =====================================================
+   * DATA INVENTARIS DARI SUPABASE
+   * =====================================================
+   */
+
+  try{
+
+    if(!window.supabaseClient){
+      console.warn('⚠️ Supabase belum tersedia.');
+      items=structuredClone(SEED);
+    }
+    else{
+
+      const {data,error}=await window.supabaseClient
+        .from('inventaris')
+        .select('*')
+        .order('id',{ascending:true});
+
+      if(error){
+        console.error(
+          '❌ Gagal mengambil data inventaris dari Supabase:',
+          error
+        );
+
+        /*
+         * Fallback sementara ke localStorage
+         */
+        const s=localStorage.getItem(KEY);
+
+        items=s
+          ? JSON.parse(s)
+          : structuredClone(SEED);
+
+      }
+      else{
+
+        console.log(
+          '☁️ Data inventaris dari Supabase:',
+          data
+        );
+
+        /*
+         * Jika database online memiliki data,
+         * ubah data Supabase ke format `items`
+         * yang dipakai website.
+         */
+
+        items=data.map(row=>({
+
+          id:row.id,
+
+          nama_merek:row.nama_merek,
+
+          nama:(row.nama_merek||'').split(' / ')[0]||'',
+          merek:(row.nama_merek||'').split(' / ').slice(1).join(' / ')||'',
+
+          sumber:row.sumber_dana||'',
+
+          jumlah:Number(row.jumlah)||0,
+
+          harga:Number(row.harga_satuan)||0,
+
+          user:row.user||'',
+
+          lokasi:row.lokasi||'',
+
+          kondisi:row.kondisi||'',
+
+          barcode:row.barcode||'',
+
+          units:row.kode_unit
+            ? [{
+                kode:row.kode_unit,
+                kondisi:row.kondisi||''
+              }]
+            : [],
+
+          tahun:row.masuk
+            ? Number(String(row.masuk).slice(0,4))
+            : 2026,
+
+          bulan:row.masuk
+            ? String(Number(String(row.masuk).slice(5,7)))
+            : '1',
+
+          kategori:'CSR',
+          kelompok:'FUR',
+          gedung:'',
+          satuan:'unit',
+          kodekhusus:'',
+          ket:'',
+          drive:'',
+          bitly:''
+
+        }));
+
+        /*
+         * Jika Supabase kosong, gunakan data awal.
+         */
+
+        if(data.length===0){
+          items=structuredClone(SEED);
+        }
+
+      }
+
+    }
+
+  }
+  catch(e){
+
+    console.error(
+      '❌ Kesalahan saat memuat data:',
+      e
+    );
+
+    const s=localStorage.getItem(KEY);
+
+    items=s
+      ? JSON.parse(s)
+      : structuredClone(SEED);
+
+  }
+
+
+  /*
+   * =====================================================
+   * DATA LOKAL LAINNYA
+   * =====================================================
+   */
+
+  try{
+    log=JSON.parse(
+      localStorage.getItem(LOGKEY)||'[]'
+    );
+  }
+  catch(e){
+    log=[];
+  }
+
+  try{
+    fotos=JSON.parse(
+      localStorage.getItem(FOTOKEY)||'{}'
+    );
+  }
+  catch(e){
+    fotos={};
+  }
+
+
+  /*
+   * =====================================================
+   * MIGRASI & LOKASI
+   * =====================================================
+   */
+
   migrate();
   loadLocations();
   loadBuildings();
+
+  refreshCounts();
+
 }
 function save(){
   try{ localStorage.setItem(KEY, JSON.stringify(items)); localStorage.setItem(LOGKEY, JSON.stringify(log)); }
