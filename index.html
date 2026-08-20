@@ -1487,20 +1487,78 @@ async function saveItem(){
 
   if(editingId){
 
-    const i=items.find(x=>x.id===editingId);
+  const i=items.find(x=>x.id===editingId);
 
-    if(!i){
-      toast('Data barang tidak ditemukan','warn');
-      return;
-    }
+  if(!i){
+    toast('Data barang tidak ditemukan','warn');
+    return;
+  }
 
-    Object.assign(i,meta);
+  Object.assign(i,meta);
 
-    reconcileUnits(i,jumlah);
+  reconcileUnits(i,jumlah);
 
-    i.jumlah=itemQty(i);
+  i.jumlah=itemQty(i);
 
-    persistFoto(i.id);
+  persistFoto(i.id);
+
+  const supabaseData={
+    kode_unit:i.units?.[0]?.kode || '',
+    barcode:i.barcode || '',
+    nama_merek:[i.nama,i.merek].filter(Boolean).join(' / '),
+    sumber_dana:i.sumber || '',
+    masuk:i.tahun && i.bulan
+      ? `${i.tahun}-${String(parseInt(i.bulan)||1).padStart(2,'0')}-01`
+      : null,
+    jumlah:i.jumlah || 0,
+    harga_satuan:i.harga || 0,
+    user:i.user || '',
+    lokasi:[i.gedung,i.lokasi].filter(Boolean).join(' - '),
+    kondisi:i.kondisi || ''
+  };
+
+  console.log(
+    '✏️ Mengubah data inventaris di Supabase:',
+    supabaseData
+  );
+
+  const { data, error } = await window.supabaseClient
+    .from('inventaris')
+    .update(supabaseData)
+    .eq('kode_unit',supabaseData.kode_unit)
+    .select();
+
+  if(error){
+    console.error(
+      '❌ Gagal memperbarui data di Supabase:',
+      error
+    );
+
+    toast(
+      'Gagal memperbarui database online',
+      'warn'
+    );
+
+    return;
+  }
+
+  console.log(
+    '✅ Data berhasil diperbarui di Supabase:',
+    data
+  );
+
+  toast('Perubahan tersimpan');
+
+  save();
+  closeModal('itemModal');
+
+  if(view==='dashboard')
+    renderDashboard();
+  else
+    go(i.kategori);
+
+  return;
+}
 
     /*
      * SIMPAN PERUBAHAN KE SUPABASE
