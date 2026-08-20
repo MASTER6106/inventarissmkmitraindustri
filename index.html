@@ -1532,17 +1532,11 @@ async function saveItem(){
       .eq('kode_unit',supabaseData.kode_unit)
       .select();
 
-    const {data,error}=await window.supabaseClient
-  .from('inventaris')
-  .update(supabaseData)
-  .eq('kode_unit',supabaseData.kode_unit)
-  .select();
-
-console.log('🔎 HASIL UPDATE SUPABASE:', {
-  data,
-  error,
-  kode_unit: supabaseData.kode_unit
-});
+    console.log('🔎 HASIL UPDATE SUPABASE:', {
+      data,
+      error,
+      kode_unit: supabaseData.kode_unit
+    });
 
     if(error){
 
